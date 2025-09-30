@@ -1,0 +1,20 @@
+[project]
+name = "app"
+readme = "README.md"
+version = "0.0.1"
+
+dependencies = [
+]
+
+[project.optional-dependencies]
+dev = [
+  "pylint",
+  "pytest",
+  "numpy",
+  "opencv-python-headless",
+  "scikit-image",
+  "tqdm",
+
+  "sphinx",
+  "furo",
+]
