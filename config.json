@@ -61,7 +61,6 @@
   },
   "output_settings": {
     "clean_dir": "./output/clean_background",
-    "noisy_dir": "./output/noisy_background",
-    "file_prefix": "pore_image"
+    "noisy_dir": "./output/noisy_background"
   }
 }

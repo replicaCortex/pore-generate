@@ -1,20 +1,25 @@
 [project]
-name = "app"
+name = "pores_generator"
 readme = "README.md"
 version = "0.0.1"
 
 dependencies = [
-]
-
-[project.optional-dependencies]
-dev = [
-  "pylint",
-  "pytest",
   "numpy",
   "opencv-python-headless",
   "scikit-image",
   "tqdm",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
 
   "sphinx",
   "furo",
 ]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "PL"]
+
+[tool.ruff.format]
+quote-style = "double"

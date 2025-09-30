@@ -1,4 +1,3 @@
-# pylint: disable=no-member
 """Модуль для процедурной генерации изображений с порами."""
 
 import random
