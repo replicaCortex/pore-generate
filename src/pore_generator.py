@@ -48,6 +48,8 @@ class PoreGenerator:
         self._height = image_settings.get("height", 512)
         self._config = config
 
+        self._pore_data = []
+
     def generate_image(self) -> np.ndarray:
         """Создает одно изображение с порами всех сконфигурированных типов.
 
@@ -56,6 +58,8 @@ class PoreGenerator:
         """
         image = np.full((self._height, self._width), _WHITE_COLOR, dtype=np.uint8)
         occupied_mask = np.zeros((self._height, self._width), dtype=bool)
+
+        self._pore_data = []
 
         pore_size_categories = ["large_pores", "medium_pores", "small_pores"]
         pore_type_categories = [
@@ -115,7 +119,15 @@ class PoreGenerator:
 
             if position:
                 x, y = position
-                self._place_on_image(image, occupied_mask, pore_canvas, x, y)
+                self._place_on_image(
+                    image,
+                    occupied_mask,
+                    pore_canvas,
+                    x,
+                    y,
+                    size_category,
+                    type_category,
+                )
                 placed_count += 1
             elif placed_count < count * 0.5:
                 current_radius_mean = max(3.0, current_radius_mean * 0.95)
@@ -308,6 +320,8 @@ class PoreGenerator:
         canvas: np.ndarray,
         x: int,
         y: int,
+        size_category: str,
+        type_category: str,
     ) -> None:
         """Размещает холст с порой на изображении и обновляет маску."""
         canvas_center = canvas.shape[0] // 2
@@ -318,6 +332,15 @@ class PoreGenerator:
 
         image[slice_y, slice_x][pore_mask] = _BLACK_COLOR
         occupied_mask[slice_y, slice_x][pore_mask] = True
+
+        pore_info = {
+            "center": (x, y),
+            "size": size_category,
+            "type": type_category,
+            "canvas_shape": canvas.shape,
+        }
+
+        self._pore_data.append(pore_info)
 
     def _get_overlap_slices(
         self, canvas: np.ndarray, y_start: int, x_start: int

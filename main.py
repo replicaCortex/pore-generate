@@ -76,6 +76,9 @@ class PoreImageGenerator:
         """Генерирует, обрабатывает и сохраняет одну пару изображений."""
         clean_image = self.pore_generator.generate_image()
 
+        # print(f"Сгенерировано пор: {len(self.pore_generator._pore_data)}")
+        # print(self.pore_generator._pore_data)
+
         noisy_image = self.image_processor.add_complete_noise(clean_image.copy())
 
         clean_image_final = self.image_processor.crop(clean_image)
