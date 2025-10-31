@@ -51,29 +51,50 @@ class PoreGenerator:
     def generate_image(self) -> np.ndarray:
         """Создает одно изображение с порами всех сконфигурированных типов.
 
-        Процесс идет последовательно: сначала размещаются большие поры,
-        затем средние и малые.
-
         Returns:
             Сгенерированное изображение в виде NumPy массива.
         """
         image = np.full((self._height, self._width), _WHITE_COLOR, dtype=np.uint8)
         occupied_mask = np.zeros((self._height, self._width), dtype=bool)
 
-        pore_categories = ["large_pores", "medium_pores", "small_pores"]
-        for category in pore_categories:
-            self._add_pores_of_category(image, occupied_mask, category)
+        pore_size_categories = ["large_pores", "medium_pores", "small_pores"]
+        pore_type_categories = [
+            "single",
+            "weakly_overlapping",
+            "strongly_overlapping",
+            "defective",
+        ]
+
+        for size_cat in pore_size_categories:
+            for type_cat in pore_type_categories:
+                self._add_pores(image, occupied_mask, size_cat, type_cat)
 
         return image
 
-    def _add_pores_of_category(
-        self, image: np.ndarray, occupied_mask: np.ndarray, category: str
+    def _add_pores(
+        self,
+        image: np.ndarray,
+        occupied_mask: np.ndarray,
+        size_category: str,
+        type_category: str,
     ) -> None:
-        """Добавляет на изображение поры указанной категории."""
-        settings = self._config.get("pore_settings", {}).get(category, {})
+        """Добавляет на изображение поры указанного размера и типа."""
+
+        settings = (
+            self._config.get("pore_settings", {})
+            .get(size_category, {})
+            .get(type_category)
+        )
+
         if not settings:
-            print(f"Warning: No settings found for pore category '{category}'.")
             return
+
+        if type_category == "weakly_overlapping":
+            pass
+        elif type_category == "strongly_overlapping":
+            pass
+        elif type_category == "defective":
+            pass
 
         count = random.randint(*settings.get("count_range", (0, 0)))
         current_radius_mean = settings.get("radius_mean", 10.0)
@@ -88,7 +109,9 @@ class PoreGenerator:
             pore_canvas = self._generate_single_pore_canvas(
                 settings, current_radius_mean
             )
-            position = self._find_valid_placement(pore_canvas, occupied_mask, category)
+            position = self._find_valid_placement(
+                pore_canvas, occupied_mask, size_category
+            )
 
             if position:
                 x, y = position
