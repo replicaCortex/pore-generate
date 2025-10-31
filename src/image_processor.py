@@ -32,24 +32,7 @@ class ImageProcessor:
     _PORE_NOISE_WEIGHTS: Sequence[float] = (0.5, 0.3, 0.2)
 
     def __init__(self, config: dict[str, Any]):
-        """Инициализирует обработчик изображений с заданной конфигурацией.
-
-        Args:
-            config: Словарь конфигурации. Ожидаемая структура:
-                {
-                    "noise_settings": {
-                        "min_gray_value": int,
-                        "max_gray_value": int,
-                        "noise_intensity": float,
-                        "pore_noise": {
-                            "enabled": bool,
-                            "min_value": int,
-                            "max_value": int,
-                            "texture_enabled": bool
-                        }
-                    }
-                }
-        """
+        """Инициализирует обработчик изображений с заданной конфигурацией."""
         noise_settings = config.get("noise_settings", {})
         pore_noise_settings = noise_settings.get("pore_noise", {})
 
@@ -57,12 +40,36 @@ class ImageProcessor:
         self._max_gray = noise_settings.get("max_gray_value", 250)
         self._noise_intensity = noise_settings.get("noise_intensity", 0.5)
 
+        crop_settings = config.get("crop_settings", {})
+        self._is_crop_enabled = crop_settings.get("enabled", False)
+        self._crop_border_size = crop_settings.get("border_size", 0)
+
         self._is_pore_noise_enabled = pore_noise_settings.get("enabled", False)
         self._pore_min_val = pore_noise_settings.get("min_value", 0)
         self._pore_max_val = pore_noise_settings.get("max_value", 15)
         self._is_pore_texture_enabled = pore_noise_settings.get(
             "texture_enabled", False
         )
+
+    def crop(self, image: np.ndarray) -> np.ndarray:
+        if not self._is_crop_enabled or self._crop_border_size <= 0:
+            return image
+
+        h, w = image.shape[:2]
+
+        border_px = int(min(h, w) * self._crop_border_size / 100.0)
+
+        if border_px <= 0:
+            return image
+
+        if 2 * border_px >= h or 2 * border_px >= w:
+            print(
+                f"Warning: Crop percentage {self._crop_border_percent}% results "
+                f"in a border size ({border_px}px) that is too large. Skipping crop."
+            )
+            return image
+
+        return image[border_px : h - border_px, border_px : w - border_px]
 
     def add_complete_noise(self, image: np.ndarray) -> np.ndarray:
         """Применяет к изображению все сконфигурированные виды шума.

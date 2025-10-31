@@ -4,6 +4,10 @@
     "height": 200,
     "total_images": 10
   },
+  "crop_settings": {
+    "enabled": true,
+    "border_size": 15
+  },
   "pore_settings": {
     "small_pores": {
       "count_range": [

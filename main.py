@@ -78,12 +78,15 @@ class PoreImageGenerator:
 
         noisy_image = self.image_processor.add_complete_noise(clean_image.copy())
 
+        clean_image_final = self.image_processor.crop(clean_image)
+        noisy_image_final = self.image_processor.crop(noisy_image)
+
         base_filename = f"{run_id}_{image_index:04d}"
         clean_path = os.path.join(self._clean_dir, f"{base_filename}_clean.png")
         noisy_path = os.path.join(self._noisy_dir, f"{base_filename}_noisy.png")
 
-        cv2.imwrite(clean_path, clean_image)
-        cv2.imwrite(noisy_path, noisy_image)
+        cv2.imwrite(clean_path, clean_image_final)
+        cv2.imwrite(noisy_path, noisy_image_final)
 
 
 def main() -> None:
