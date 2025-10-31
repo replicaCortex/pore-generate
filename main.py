@@ -4,6 +4,7 @@ import os
 import random
 import string
 
+import click
 import cv2
 from tqdm import tqdm
 
@@ -35,7 +36,7 @@ class PoreImageGenerator:
         _total_images: Общее количество изображений для генерации.
     """
 
-    def __init__(self, config_path: str = _DEFAULT_CONFIG_PATH):
+    def __init__(self, config_path: str = _DEFAULT_CONFIG_PATH, verbose: bool = False):
         """Инициализирует генератор.
 
         Args:
@@ -43,6 +44,7 @@ class PoreImageGenerator:
         """
         loader = ConfigLoader(config_path)
         self.config = loader.load()
+        self.verbose = verbose
 
         self.pore_generator = PoreGenerator(self.config)
         self.image_processor = ImageProcessor(self.config)
@@ -76,8 +78,9 @@ class PoreImageGenerator:
         """Генерирует, обрабатывает и сохраняет одну пару изображений."""
         clean_image = self.pore_generator.generate_image()
 
-        # print(f"Сгенерировано пор: {len(self.pore_generator._pore_data)}")
-        # print(self.pore_generator._pore_data)
+        if self.verbose:
+            print(f"Сгенерировано пор: {len(self.pore_generator._pore_data)}")
+            print(self.pore_generator._pore_data)
 
         noisy_image = self.image_processor.add_complete_noise(clean_image.copy())
 
@@ -92,9 +95,11 @@ class PoreImageGenerator:
         cv2.imwrite(noisy_path, noisy_image_final)
 
 
-def main() -> None:
+@click.command()
+@click.option("--verbose", is_flag=True)
+def main(verbose) -> None:
     """Основная точка входа для запуска генератора изображений."""
-    generator = PoreImageGenerator(_DEFAULT_CONFIG_PATH)
+    generator = PoreImageGenerator(_DEFAULT_CONFIG_PATH, verbose)
     generator.generate_images()
 
 

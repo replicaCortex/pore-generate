@@ -4,8 +4,6 @@ accessible-pygments==0.0.5
     # via furo
 alabaster==1.0.0
     # via sphinx
-astroid==3.3.11
-    # via pylint
 babel==2.17.0
     # via sphinx
 beautifulsoup4==4.14.2
@@ -14,8 +12,8 @@ certifi==2025.8.3
     # via requests
 charset-normalizer==3.4.3
     # via requests
-dill==0.4.0
-    # via pylint
+click==8.3.0
+    # via pores-generator (pyproject.toml)
 docutils==0.21.2
     # via sphinx
 furo==2025.9.25
@@ -28,16 +26,12 @@ imagesize==1.4.1
     # via sphinx
 iniconfig==2.1.0
     # via pytest
-isort==6.0.1
-    # via pylint
 jinja2==3.1.6
     # via sphinx
 lazy-loader==0.4
     # via scikit-image
 markupsafe==3.0.3
     # via jinja2
-mccabe==0.7.0
-    # via pylint
 networkx==3.5
     # via scikit-image
 numpy==2.3.3
@@ -60,8 +54,6 @@ pillow==11.3.0
     # via
     #   imageio
     #   scikit-image
-platformdirs==4.4.0
-    # via pylint
 pluggy==1.6.0
     # via pytest
 pygments==2.19.2
@@ -70,8 +62,6 @@ pygments==2.19.2
     #   furo
     #   pytest
     #   sphinx
-pylint==3.3.8
-    # via pores-generator (pyproject.toml)
 pytest==8.4.2
     # via pores-generator (pyproject.toml)
 requests==2.32.5
@@ -107,8 +97,6 @@ sphinxcontrib-serializinghtml==2.0.0
     # via sphinx
 tifffile==2025.9.30
     # via scikit-image
-tomlkit==0.13.3
-    # via pylint
 tqdm==4.67.1
     # via pores-generator (pyproject.toml)
 typing-extensions==4.15.0

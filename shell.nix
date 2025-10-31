@@ -4,6 +4,9 @@
 pkgs.mkShell {
   buildInputs = with pkgs; [
     python312Packages.uv
+
+    ruff
+    ty
   ];
 
   shellHook = ''

@@ -158,21 +158,21 @@ class ImageProcessor:
         noisy_image[pore_mask] = pore_noise[pore_mask]
         return noisy_image
 
-    def apply_morphological_operations(self, image: np.ndarray) -> np.ndarray:
-        """Применяет к изображению размытие по Гауссу и бинаризацию.
-
-        Args:
-            image: Входное изображение.
-
-        Returns:
-            Обработанное бинарное изображение.
-        """
-        kernel_size = 3
-        blurred = cv2.GaussianBlur(image, (kernel_size, kernel_size), 0.5)
-        _, binary_image = cv2.threshold(
-            blurred, _BINARY_THRESHOLD, _BACKGROUND_COLOR, cv2.THRESH_BINARY
-        )
-        return binary_image
+    # def apply_morphological_operations(self, image: np.ndarray) -> np.ndarray:
+    #     """Применяет к изображению размытие по Гауссу и бинаризацию.
+    #
+    #     Args:
+    #         image: Входное изображение.
+    #
+    #     Returns:
+    #         Обработанное бинарное изображение.
+    #     """
+    #     kernel_size = 3
+    #     blurred = cv2.GaussianBlur(image, (kernel_size, kernel_size), 0.5)
+    #     _, binary_image = cv2.threshold(
+    #         blurred, _BINARY_THRESHOLD, _BACKGROUND_COLOR, cv2.THRESH_BINARY
+    #     )
+    #     return binary_image
 
     def _generate_fractal_noise(
         self,
