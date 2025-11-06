@@ -1,6 +1,8 @@
 """Модуль для процедурной генерации изображений с порами."""
 
+import json
 import random
+from pathlib import Path
 from typing import Any
 
 import cv2
@@ -333,14 +335,85 @@ class PoreGenerator:
         image[slice_y, slice_x][pore_mask] = _BLACK_COLOR
         occupied_mask[slice_y, slice_x][pore_mask] = True
 
+        # Вычисляем характеристики поры
+        pore_properties = self._calculate_pore_properties(canvas)
+
         pore_info = {
             "center": (x, y),
+            "radius": pore_properties["radius"],
+            "area": pore_properties["area"],
+            "eccentricity": pore_properties["eccentricity"],
+            "circularity": pore_properties["circularity"],
             "size": size_category,
             "type": type_category,
             "canvas_shape": canvas.shape,
         }
 
         self._pore_data.append(pore_info)
+
+    def _calculate_pore_properties(self, canvas: np.ndarray) -> dict[str, float]:
+        """Вычисляет геометрические характеристики поры.
+
+        Args:
+            canvas: Холст с порой (бинарное изображение).
+
+        Returns:
+            Словарь с характеристиками поры:
+            - radius: эквивалентный радиус
+            - area: площадь в пикселях
+            - eccentricity: эксцентриситет (0-1)
+            - circularity: округлость (0-1)
+        """
+        # Создаем бинарную маску поры
+        pore_mask = (canvas == _BLACK_COLOR).astype(np.uint8)
+
+        # Находим контуры
+        contours, _ = cv2.findContours(
+            pore_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+
+        if not contours:
+            return {"radius": 0.0, "area": 0.0, "eccentricity": 0.0, "circularity": 0.0}
+
+        # Берем самый большой контур (основная пора)
+        largest_contour = max(contours, key=cv2.contourArea)
+
+        # Вычисляем площадь
+        area = cv2.contourArea(largest_contour)
+
+        # Вычисляем эквивалентный радиус (радиус круга с той же площадью)
+        radius = np.sqrt(area / np.pi) if area > 0 else 0.0
+
+        # Вычисляем эксцентриситет через эллипс
+        if len(largest_contour) >= 5:  # Минимум 5 точек для fitEllipse
+            ellipse = cv2.fitEllipse(largest_contour)
+            (_, (width, height), _) = ellipse
+
+            # Эксцентриситет = sqrt(1 - (b²/a²)), где a - большая полуось, b - малая
+            if width > 0 and height > 0:
+                a = max(width, height) / 2
+                b = min(width, height) / 2
+                eccentricity = np.sqrt(1 - (b**2 / a**2)) if a > 0 else 0.0
+            else:
+                eccentricity = 0.0
+        else:
+            eccentricity = 0.0
+
+        # Вычисляем округлость (circularity)
+        # Округлость = 4π × площадь / периметр²
+        perimeter = cv2.arcLength(largest_contour, True)
+        if perimeter > 0:
+            circularity = 4 * np.pi * area / (perimeter**2)
+            circularity = min(1.0, circularity)  # Ограничиваем максимум 1.0
+        else:
+            circularity = 0.0
+
+        return {
+            "radius": radius,
+            "area": area,
+            "eccentricity": eccentricity,
+            "circularity": circularity,
+        }
 
     def _get_overlap_slices(
         self, canvas: np.ndarray, y_start: int, x_start: int
@@ -366,3 +439,65 @@ class PoreGenerator:
             slice(img_x_start, img_x_end),
             pore_mask,
         )
+
+    def get_pore_data(self) -> list[dict[str, Any]]:
+        """Возвращает информацию о всех сгенерированных порах.
+
+        Returns:
+            Список словарей с информацией о каждой поре.
+        """
+        return self._pore_data.copy()
+
+    def save_pore_data_to_json(self, filepath: str | Path) -> None:
+        """Сохраняет информацию о порах в JSON файл.
+
+        Args:
+            filepath: Путь к файлу для сохранения данных.
+        """
+        # Преобразуем данные в JSON-совместимый формат
+        json_data = []
+        for pore in self._pore_data:
+            pore_dict = {
+                "center_x": int(pore["center"][0]),
+                "center_y": int(pore["center"][1]),
+                "radius": float(pore["radius"]),
+                "area": float(pore["area"]),
+                "eccentricity": float(pore["eccentricity"]),
+                "circularity": float(pore["circularity"]),
+                "size_category": pore["size"],
+                "type_category": pore["type"],
+                "canvas_width": int(pore["canvas_shape"][1]),
+                "canvas_height": int(pore["canvas_shape"][0]),
+            }
+            json_data.append(pore_dict)
+
+        # Создаем директорию, если она не существует
+        filepath = Path(filepath)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+
+        # Сохраняем в файл
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(json_data, f, indent=2, ensure_ascii=False)
+
+    def get_current_pore_data(self) -> list[dict[str, Any]]:
+        """Возвращает данные о порах для текущего изображения.
+
+        Returns:
+            Список словарей с информацией о каждой поре.
+        """
+        pore_data_formatted = []
+        for pore in self._pore_data:
+            pore_dict = {
+                "center_x": int(pore["center"][0]),
+                "center_y": int(pore["center"][1]),
+                "radius": float(pore["radius"]),
+                "area": float(pore["area"]),
+                "eccentricity": float(pore["eccentricity"]),
+                "circularity": float(pore["circularity"]),
+                "size_category": pore["size"],
+                "type_category": pore["type"],
+                "canvas_width": int(pore["canvas_shape"][1]),
+                "canvas_height": int(pore["canvas_shape"][0]),
+            }
+            pore_data_formatted.append(pore_dict)
+        return pore_data_formatted

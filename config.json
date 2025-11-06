@@ -18,8 +18,8 @@
         "radius_mean": 25,
         "stretch_enabled": true,
         "stretch_factor_range": [
-          1.1,
-          1.8
+          1,
+          1.1
         ],
         "rotation_enabled": true
       },
@@ -51,8 +51,8 @@
         "radius_mean": 12,
         "stretch_enabled": true,
         "stretch_factor_range": [
-          1.1,
-          1.5
+          1,
+          1.1
         ],
         "rotation_enabled": true
       }

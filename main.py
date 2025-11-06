@@ -1,8 +1,10 @@
 """Основной модуль для генерации набора данных изображений пор."""
 
+import json
 import os
 import random
 import string
+from pathlib import Path
 
 import click
 import cv2
@@ -34,6 +36,7 @@ class PoreImageGenerator:
         _clean_dir: Путь к директории для чистых изображений.
         _noisy_dir: Путь к директории для зашумленных изображений.
         _total_images: Общее количество изображений для генерации.
+        _all_pores_data: Словарь для хранения данных о порах всех изображений.
     """
 
     def __init__(self, config_path: str = _DEFAULT_CONFIG_PATH, verbose: bool = False):
@@ -41,6 +44,7 @@ class PoreImageGenerator:
 
         Args:
             config_path: Путь к файлу конфигурации.
+            verbose: Флаг для вывода подробной информации.
         """
         loader = ConfigLoader(config_path)
         self.config = loader.load()
@@ -55,6 +59,9 @@ class PoreImageGenerator:
         self._clean_dir = output_settings.get("clean_dir", "output/clean")
         self._noisy_dir = output_settings.get("noisy_dir", "output/noisy")
         self._total_images = image_settings.get("total_images", 100)
+
+        # Словарь для хранения данных о порах всех изображений
+        self._all_pores_data = {}
 
         self._create_output_directories()
 
@@ -74,13 +81,16 @@ class PoreImageGenerator:
         for i in tqdm(range(self._total_images), desc="Generating Images"):
             self._generate_and_save_pair(run_id, i)
 
+        self._save_all_pores_data()
+
     def _generate_and_save_pair(self, run_id: str, image_index: int) -> None:
         """Генерирует, обрабатывает и сохраняет одну пару изображений."""
         clean_image = self.pore_generator.generate_image()
 
         if self.verbose:
             print(f"Сгенерировано пор: {len(self.pore_generator._pore_data)}")
-            print(self.pore_generator._pore_data)
+
+        current_pore_data = self.pore_generator.get_current_pore_data()
 
         noisy_image = self.image_processor.add_complete_noise(clean_image.copy())
 
@@ -88,11 +98,29 @@ class PoreImageGenerator:
         noisy_image_final = self.image_processor.crop(noisy_image)
 
         base_filename = f"{run_id}_{image_index:04d}"
-        clean_path = os.path.join(self._clean_dir, f"{base_filename}_clean.png")
-        noisy_path = os.path.join(self._noisy_dir, f"{base_filename}_noisy.png")
+        clean_filename = f"{base_filename}_clean.png"
+        noisy_filename = f"{base_filename}_noisy.png"
+
+        clean_path = os.path.join(self._clean_dir, clean_filename)
+        noisy_path = os.path.join(self._noisy_dir, noisy_filename)
 
         cv2.imwrite(clean_path, clean_image_final)
         cv2.imwrite(noisy_path, noisy_image_final)
+
+        self._all_pores_data[clean_filename] = current_pore_data
+
+    def _save_all_pores_data(self) -> None:
+        """Сохраняет данные о порах всех изображений в JSON файл."""
+        output_path = Path("output/pores_data.json")
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(self._all_pores_data, f, indent=2, ensure_ascii=False)
+
+        print(f"Pore data saved to {output_path}")
+        print(f"Total images processed: {len(self._all_pores_data)}")
+        total_pores = sum(len(pores) for pores in self._all_pores_data.values())
+        print(f"Total pores generated: {total_pores}")
 
 
 @click.command()
