@@ -85,7 +85,6 @@ class PoreGenerator:
         type_category: str,
     ) -> None:
         """Добавляет на изображение поры указанного размера и типа."""
-
         settings = (
             self._config.get("pore_settings", {})
             .get(size_category, {})
@@ -94,13 +93,6 @@ class PoreGenerator:
 
         if not settings:
             return
-
-        if type_category == "weakly_overlapping":
-            pass
-        elif type_category == "strongly_overlapping":
-            pass
-        elif type_category == "defective":
-            pass
 
         count = random.randint(*settings.get("count_range", (0, 0)))
         current_radius_mean = settings.get("radius_mean", 10.0)
@@ -112,9 +104,19 @@ class PoreGenerator:
         while placed_count < count and total_attempts < max_total_attempts:
             total_attempts += 1
 
-            pore_canvas = self._generate_single_pore_canvas(
-                settings, current_radius_mean
+            # Генерируем радиус для исходного круга
+            std_dev = np.sqrt(current_radius_mean)
+            min_r = max(3, int(current_radius_mean - 3 * std_dev))
+            max_r = int(current_radius_mean + 3 * std_dev)
+            original_radius = float(
+                np.clip(np.random.poisson(lam=current_radius_mean), min_r, max_r)
             )
+
+            # Генерируем деформированную пору
+            pore_canvas = self._generate_single_pore_canvas_with_radius(
+                settings, original_radius
+            )
+
             position = self._find_valid_placement(
                 pore_canvas, occupied_mask, size_category
             )
@@ -129,22 +131,18 @@ class PoreGenerator:
                     y,
                     size_category,
                     type_category,
+                    original_radius,  # Передаем исходный радиус
                 )
                 placed_count += 1
             elif placed_count < count * 0.5:
                 current_radius_mean = max(3.0, current_radius_mean * 0.95)
 
-    def _generate_single_pore_canvas(
-        self, settings: dict[str, Any], radius_mean: float
+    def _generate_single_pore_canvas_with_radius(
+        self, settings: dict[str, Any], radius: float
     ) -> np.ndarray:
         """Создает холст с одной порой, применяя все трансформации."""
-        std_dev = np.sqrt(radius_mean)
-        min_r = max(3, int(radius_mean - 3 * std_dev))
-        max_r = int(radius_mean + 3 * std_dev)
-        radius = np.clip(np.random.poisson(lam=radius_mean), min_r, max_r)
-
         pore_type = random.choice(["smooth", "normal", "rough"])
-        pore_canvas = self._create_realistic_pore(radius, pore_type)
+        pore_canvas = self._create_realistic_pore(int(radius), pore_type)
 
         if settings.get("stretch_enabled", False):
             stretch_range = settings.get("stretch_factor_range", [1.0, 1.0])
@@ -324,6 +322,7 @@ class PoreGenerator:
         y: int,
         size_category: str,
         type_category: str,
+        original_radius: float,
     ) -> None:
         """Размещает холст с порой на изображении и обновляет маску."""
         canvas_center = canvas.shape[0] // 2
@@ -335,17 +334,21 @@ class PoreGenerator:
         image[slice_y, slice_x][pore_mask] = _BLACK_COLOR
         occupied_mask[slice_y, slice_x][pore_mask] = True
 
-        # Вычисляем характеристики поры
-        pore_properties = self._calculate_pore_properties(canvas)
+        deformed_properties = self._calculate_pore_properties(canvas)
+
+        original_properties = {
+            "radius": original_radius,
+            "area": np.pi * original_radius**2,
+            "eccentricity": 0.0,  # Для круга всегда 0
+            "circularity": 1.0,  # Для круга всегда 1
+        }
 
         pore_info = {
             "center": (x, y),
-            "radius": pore_properties["radius"],
-            "area": pore_properties["area"],
-            "eccentricity": pore_properties["eccentricity"],
-            "circularity": pore_properties["circularity"],
-            "size": size_category,
-            "type": type_category,
+            "original": original_properties,
+            "deformed": deformed_properties,
+            "size_category": size_category,
+            "type_category": type_category,
             "canvas_shape": canvas.shape,
         }
 
@@ -480,22 +483,26 @@ class PoreGenerator:
             json.dump(json_data, f, indent=2, ensure_ascii=False)
 
     def get_current_pore_data(self) -> list[dict[str, Any]]:
-        """Возвращает данные о порах для текущего изображения.
-
-        Returns:
-            Список словарей с информацией о каждой поре.
-        """
+        """Возвращает данные о порах для текущего изображения."""
         pore_data_formatted = []
         for pore in self._pore_data:
             pore_dict = {
                 "center_x": int(pore["center"][0]),
                 "center_y": int(pore["center"][1]),
-                "radius": float(pore["radius"]),
-                "area": float(pore["area"]),
-                "eccentricity": float(pore["eccentricity"]),
-                "circularity": float(pore["circularity"]),
-                "size_category": pore["size"],
-                "type_category": pore["type"],
+                "original": {
+                    "radius": round(float(pore["original"]["radius"]), 2),
+                    "area": round(float(pore["original"]["area"]), 2),
+                    "eccentricity": round(float(pore["original"]["eccentricity"]), 4),
+                    "circularity": round(float(pore["original"]["circularity"]), 4),
+                },
+                "deformed": {
+                    "radius": round(float(pore["deformed"]["radius"]), 2),
+                    "area": round(float(pore["deformed"]["area"]), 2),
+                    "eccentricity": round(float(pore["deformed"]["eccentricity"]), 4),
+                    "circularity": round(float(pore["deformed"]["circularity"]), 4),
+                },
+                "size_category": pore["size_category"],
+                "type_category": pore["type_category"],
                 "canvas_width": int(pore["canvas_shape"][1]),
                 "canvas_height": int(pore["canvas_shape"][0]),
             }

@@ -6,7 +6,6 @@ import random
 import string
 from pathlib import Path
 
-import click
 import cv2
 from tqdm import tqdm
 
@@ -39,16 +38,14 @@ class PoreImageGenerator:
         _all_pores_data: Словарь для хранения данных о порах всех изображений.
     """
 
-    def __init__(self, config_path: str = _DEFAULT_CONFIG_PATH, verbose: bool = False):
+    def __init__(self, config_path: str = _DEFAULT_CONFIG_PATH):
         """Инициализирует генератор.
 
         Args:
             config_path: Путь к файлу конфигурации.
-            verbose: Флаг для вывода подробной информации.
         """
         loader = ConfigLoader(config_path)
         self.config = loader.load()
-        self.verbose = verbose
 
         self.pore_generator = PoreGenerator(self.config)
         self.image_processor = ImageProcessor(self.config)
@@ -87,9 +84,6 @@ class PoreImageGenerator:
         """Генерирует, обрабатывает и сохраняет одну пару изображений."""
         clean_image = self.pore_generator.generate_image()
 
-        if self.verbose:
-            print(f"Сгенерировано пор: {len(self.pore_generator._pore_data)}")
-
         current_pore_data = self.pore_generator.get_current_pore_data()
 
         noisy_image = self.image_processor.add_complete_noise(clean_image.copy())
@@ -123,11 +117,9 @@ class PoreImageGenerator:
         print(f"Total pores generated: {total_pores}")
 
 
-@click.command()
-@click.option("--verbose", is_flag=True)
-def main(verbose) -> None:
+def main() -> None:
     """Основная точка входа для запуска генератора изображений."""
-    generator = PoreImageGenerator(_DEFAULT_CONFIG_PATH, verbose)
+    generator = PoreImageGenerator(_DEFAULT_CONFIG_PATH)
     generator.generate_images()
 
 
