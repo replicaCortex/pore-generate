@@ -12,8 +12,6 @@ certifi==2025.8.3
     # via requests
 charset-normalizer==3.4.3
     # via requests
-click==8.3.0
-    # via pores-generator (pyproject.toml)
 docutils==0.21.2
     # via sphinx
 furo==2025.9.25

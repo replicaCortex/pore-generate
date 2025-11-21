@@ -1,0 +1,49 @@
+{
+  "image_settings": {
+    "width": 200,
+    "height": 200,
+    "total_images": 10
+  },
+  "pore_settings": {
+    "large_pores": {
+      "count_range": [
+        3,
+        5
+      ],
+      "radius_mean": 25,
+      "stretch_factor_range": [
+        1,
+        1.1
+      ]
+    },
+    "medium_pores": {
+      "count_range": [
+        10,
+        15
+      ],
+      "radius_mean": 12,
+      "stretch_factor_range": [
+        1,
+        1.1
+      ]
+    },
+    "small_pores": {
+      "count_range": [
+        20,
+        30
+      ],
+      "radius_mean": 6
+    }
+  },
+  "noise_settings": {
+    "matrix_gray_range": [
+      100,
+      200
+    ],
+    "pore_gray_range": [
+      0,
+      100
+    ],
+    "noise_intensity": 0.1
+  }
+}

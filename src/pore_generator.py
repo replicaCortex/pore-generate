@@ -384,15 +384,12 @@ class PoreGenerator:
         # Вычисляем площадь
         area = cv2.contourArea(largest_contour)
 
-        # Вычисляем эквивалентный радиус (радиус круга с той же площадью)
         radius = np.sqrt(area / np.pi) if area > 0 else 0.0
 
-        # Вычисляем эксцентриситет через эллипс
-        if len(largest_contour) >= 5:  # Минимум 5 точек для fitEllipse
+        if len(largest_contour) >= 5:
             ellipse = cv2.fitEllipse(largest_contour)
             (_, (width, height), _) = ellipse
 
-            # Эксцентриситет = sqrt(1 - (b²/a²)), где a - большая полуось, b - малая
             if width > 0 and height > 0:
                 a = max(width, height) / 2
                 b = min(width, height) / 2
@@ -402,8 +399,6 @@ class PoreGenerator:
         else:
             eccentricity = 0.0
 
-        # Вычисляем округлость (circularity)
-        # Округлость = 4π × площадь / периметр²
         perimeter = cv2.arcLength(largest_contour, True)
         if perimeter > 0:
             circularity = 4 * np.pi * area / (perimeter**2)
@@ -457,7 +452,6 @@ class PoreGenerator:
         Args:
             filepath: Путь к файлу для сохранения данных.
         """
-        # Преобразуем данные в JSON-совместимый формат
         json_data = []
         for pore in self._pore_data:
             pore_dict = {
@@ -474,11 +468,9 @@ class PoreGenerator:
             }
             json_data.append(pore_dict)
 
-        # Создаем директорию, если она не существует
         filepath = Path(filepath)
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
-        # Сохраняем в файл
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(json_data, f, indent=2, ensure_ascii=False)
 
