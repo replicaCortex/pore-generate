@@ -6,6 +6,8 @@ pkgs.mkShell {
     typst
     tinymist
     typstyle
+
+    texlab
   ];
 
   shellHook = '''';
